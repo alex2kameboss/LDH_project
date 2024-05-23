@@ -22,7 +22,32 @@ output reg              dst_val  ,  // valid, active high
 input                   dst_rdy  ,  // ready, active high
 output reg [8-1:0]      dst_data    // data, steady on valid
 );
+reg cnt;
+wire output_accepted;
+wire inp_val;
 
-// place your code here
+assign inp_val = src_val & src_rdy & cfg_en;
+assign output_accepted = dst_val & dst_rdy ;
 
+always @(posedge clk or negedge rst_n)
+if (~rst_n)             cnt <= 1'b0   ; else
+if (~cfg_en)            cnt <= 1'b0   ; else
+if (output_accepted)    cnt <= ~cnt;
+
+always @(posedge clk or negedge rst_n)
+if (~rst_n)       dst_data <= 1'b0                                   ; else
+if (~cfg_en)      dst_data <= 1'b0                                   ; else
+                  dst_data <= cnt ? src_data[15:8] : src_data[7:0];
+
+always @(posedge clk or negedge rst_n)
+if (~rst_n)                 src_rdy <= 1'b1; else
+if (inp_val)                src_rdy <= 1'b0; else
+if (cnt & output_accepted)  src_rdy <= 1'b1; 
+
+always @(posedge clk or negedge rst_n)
+if (~rst_n)                dst_val <= 1'b0; else
+if (~cfg_en)               dst_val <= 1'b0; else
+if (inp_val)               dst_val <= 1'b1; else
+if (cnt & output_accepted) dst_val <= 1'b0;
+                                 
 endmodule // flow_16to8
