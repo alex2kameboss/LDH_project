@@ -29,9 +29,15 @@ always @(posedge clk)
     begin
         write_counter++;
         if(DWIDTH == 'd8)
-            $fwrite(fd,"%c",dst_data  );
+        begin
+            $fwriteb(fd,dst_data );
+            $fwrite("\n");
+        end
         else
-            $fwrite(fd,"%c%c",dst_data);
+        begin
+            $fwriteb(fd,dst_data );
+            $fwrite("\n");
+        end
     end
 
 always @(posedge clk)
