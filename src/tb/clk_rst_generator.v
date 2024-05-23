@@ -1,3 +1,8 @@
+module clk_rst_generator(
+    output reg clk,
+    output reg rst_n
+);
+
 initial begin
     clk   = 0;
     forever begin 
@@ -10,3 +15,5 @@ initial begin
     repeat(10) @(posedge clk);
     rst_n = 1;
 end 
+
+endmodule

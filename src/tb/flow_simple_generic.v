@@ -1,97 +1,120 @@
 module flow_simple_generic#(
     parameter TYPE = 0 
 )
-(
-    input clk,
-    input rst_n
-);
+();
 
 localparam DWIDTH = TYPE ? 16: 8;
 
-master_vldrdy i_master #(
+wire clk;
+wire rst_n;
+
+clk_rst_generator i_clk(
+    .clk   (clk)  ,
+    .rst_n (rst_n)
+);
+
+wire master_dut_val;
+wire master_dut_rdy;
+wire master_dut_data;
+
+master_vldrdy #(
   .DWIDTH (DWIDTH)
-) (
+) i_master  (
   // system
-  .clk      (),  // synchronous active on rising edge
-  .rst_n    (),  // asynchronous, active low
-  .cfg_en   (),  // ena.            // protocol can be violated on disable
-  .dst_val  (),  // valid, active high
-  .dst_rdy  (),  // ready, active high
-  .dst_data (),   // data, steady on valid
+  .clk      (clk),  // synchronous active on rising edge
+  .rst_n    (rst_n),  // asynchronous, active low
+  .cfg_en   (cfg_en),  // ena.            // protocol can be violated on disable
+  .dst_val  (master_dut_val),  // valid, active high
+  .dst_rdy  (master_dut_rdy),  // ready, active high
+  .dst_data (master_dut_data),   // data, steady on valid
   .read_counter()
-)
+);
+
+
+wire dut_slave_val;
+wire dut_slave_rdy;
+wire dut_slave_data;
+
+
+
+
 generate
-    if(!TYPE)
-        begin:8to16
+    if(TYPE==0)
+        begin: flow8to16
             flow_8to16 i_flow_8to16 (
             // system
-            .clk      (),  // synchronous active on rising edge
-            .rst_n    (),  // asynchronous, active low
-            .cfg_en   (),  // enable, active high
+            .clk      (clk),  // synchronous active on rising edge
+            .rst_n    (rst_n),  // asynchronous, active low
+            .cfg_en   (cfg_en),  // enable, active high
 
-            .src_val  (),  // valid, active high
-            .src_rdy  (),  // ready, active high
-            .src_data (),  // data, steady on valid
+            .src_val  (master_dut_val),  // valid, active high
+            .src_rdy  (master_dut_rdy),  // ready, active high
+            .src_data (master_dut_data),  // data, steady on valid
 
-            .dst_val  (),  // valid, active high
-            .dst_rdy  (),  // ready, active high
-            .dst_data ()   // data, steady on valid
-            )
+            .dst_val  (dut_slave_val),  // valid, active high
+            .dst_rdy  (dut_slave_rdy),  // ready, active high
+            .dst_data (dut_slave_data)   // data, steady on valid
+            );
         end
     else
-        begin:16to8
+        begin: flow16to8
         flow_16to8 i_flow_16to8 (
             // system
-            .clk      (),  // synchronous active on rising edge
-            .rst_n    (),  // asynchronous, active low
-            .cfg_en   (),  // enable, active high
+            .clk      (clk),  // synchronous active on rising edge
+            .rst_n    (rst_n),  // asynchronous, active low
+            .cfg_en   (cfg_en),  // enable, active high
 
-            .src_val  (),  // valid, active high
-            .src_rdy  (),  // ready, active high
-            .src_data (),  // data, steady on valid
+            .src_val  (master_dut_val),  // valid, active high
+            .src_rdy  (master_dut_rdy),  // ready, active high
+            .src_data (master_dut_data),  // data, steady on valid
 
-            .dst_val  (),  // valid, active high
-            .dst_rdy  (),  // ready, active high
-            .dst_data ()   // data, steady on valid
-            )
+            .dst_val  (dut_slave_val),  // valid, active high
+            .dst_rdy  (dut_slave_rdy),  // ready, active high
+            .dst_data (dut_slave_data)   // data, steady on valid
+            );
         end
 endgenerate
 
-slave_vldrdy i_slave(
+slave_vldrdy #(
     .DWIDTH (DWIDTH)
 )
+i_slave
 (
-    .clk      (),  // synchronous active on rising edge
-    .rst_n    (),  // asynchronous, active low
-    .cfg_en   (),  // enable, active high
+    .clk      (clk),  // synchronous active on rising edge
+    .rst_n    (rst_n),  // asynchronous, active low
+    .cfg_en   (cfg_en),  // enable, active high
                    // protocol can be violated on disable
         
-    .dst_val  (),  // valid, active high
-    .dst_rdy  (),  // ready, active high
-    .dst_data (),   // data, steady on valid
+    .dst_val  (dut_slave_val),  // valid, active high
+    .dst_rdy  (dut_slave_rdy),  // ready, active high
+    .dst_data (dut_slave_data),   // data, steady on valid
     .read_counter()
 );
 
-vld_rdy_checker i_checker1 #(
+vld_rdy_checker #(
     .DATA_WIDTH(DWIDTH) // Data width;
-)     
+)  
+i_checker1    
 (     
-    .clk    () , // System clock;                                                  
-    .rst_n  () , // Asynchronous reset, active low;                .
-    .ready  () , // frame ready                                                                          
-    .valid  () , // frame valid                                                                          
-    .data   ()   // cfg nr of bits using DATA_WIDTH parameter, Pixel read chanel bus;  
+    .clk    (clk) , // System clock;                                                  
+    .rst_n  (rst_n) , // Asynchronous reset, active low;                .
+    .ready  (master_dut_rdy) , // frame ready                                                                          
+    .valid  (master_dut_val) , // frame valid                                                                          
+    .data   (master_dut_data)   // cfg nr of bits using DATA_WIDTH parameter, Pixel read chanel bus;  
 );
 
-vld_rdy_checker i_checker2 #(
+vld_rdy_checker  #(
     .DATA_WIDTH(DWIDTH) // Data width;
-)     
+)   
+i_checker2  
 (     
-    .clk    () , // System clock;                                                  
-    .rst_n  () , // Asynchronous reset, active low;                .
-    .ready  () , // frame ready                                                                          
-    .valid  () , // frame valid                                                                          
-    .data   ()   // cfg nr of bits using DATA_WIDTH parameter, Pixel read chanel bus;  
+    .clk    (clk) , // System clock;                                                  
+    .rst_n  (rst_n) , // Asynchronous reset, active low;                .
+    .ready  (dut_slave_rdy) , // frame ready                                                                          
+    .valid  (dut_slave_val) , // frame valid                                                                          
+    .data   (dut_slave_data)  // cfg nr of bits using DATA_WIDTH parameter, Pixel read chanel bus;  
 );
+
+
 
 endmodule
