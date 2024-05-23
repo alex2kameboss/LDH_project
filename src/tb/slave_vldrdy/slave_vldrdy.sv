@@ -38,6 +38,8 @@ always @(posedge clk)
             $fwrite("\n");
         end
     end
+    
 always @(posedge clk)
     dst_rdy = $urand();
+
 endmodule
