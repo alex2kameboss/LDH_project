@@ -23,6 +23,7 @@ input                   dst_rdy  ,  // ready, active high
 output reg [8-1:0]      dst_data    // data, steady on valid
 );
 reg cnt;
+reg [15:0] reg_data;
 wire output_accepted;
 wire inp_val;
 
@@ -35,14 +36,18 @@ if (~cfg_en)            cnt <= 1'b0   ; else
 if (output_accepted)    cnt <= ~cnt;
 
 always @(posedge clk or negedge rst_n)
-if (~rst_n)       dst_data <= 1'b0                                   ; else
-if (~cfg_en)      dst_data <= 1'b0                                   ; else
-                  dst_data <= cnt ? src_data[15:8] : src_data[7:0];
+if (~rst_n)       dst_data <= 1'b0                                ; else
+if (~cfg_en)      dst_data <= 1'b0                                ; else
+                  dst_data <= cnt ? reg_data[15:8] : reg_data[7:0];
 
 always @(posedge clk or negedge rst_n)
 if (~rst_n)                 src_rdy <= 1'b1; else
 if (inp_val)                src_rdy <= 1'b0; else
 if (cnt & output_accepted)  src_rdy <= 1'b1; 
+
+always @(posedge clk or negedge rst_n)
+if (~rst_n)  reg_data <= 0; else
+if (inp_val) reg_data <= src_data;
 
 always @(posedge clk or negedge rst_n)
 if (~rst_n)                dst_val <= 1'b0; else
