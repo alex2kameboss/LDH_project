@@ -8,9 +8,9 @@ module flow_simple_generic#(
 
 localparam DWIDTH = TYPE ? 16: 8;
 
-master_vldrdy i_master #(
+master_vldrdy #(
   .DWIDTH (DWIDTH)
-) (
+) i_master  (
   // system
   .clk      (),  // synchronous active on rising edge
   .rst_n    (),  // asynchronous, active low
@@ -19,10 +19,10 @@ master_vldrdy i_master #(
   .dst_rdy  (),  // ready, active high
   .dst_data (),   // data, steady on valid
   .read_counter()
-)
+);
 generate
-    if(!TYPE)
-        begin:8to16
+    if(TYPE==0)
+        begin: flow8to16
             flow_8to16 i_flow_8to16 (
             // system
             .clk      (),  // synchronous active on rising edge
@@ -36,10 +36,10 @@ generate
             .dst_val  (),  // valid, active high
             .dst_rdy  (),  // ready, active high
             .dst_data ()   // data, steady on valid
-            )
+            );
         end
     else
-        begin:16to8
+        begin: flow16to8
         flow_16to8 i_flow_16to8 (
             // system
             .clk      (),  // synchronous active on rising edge
@@ -53,13 +53,14 @@ generate
             .dst_val  (),  // valid, active high
             .dst_rdy  (),  // ready, active high
             .dst_data ()   // data, steady on valid
-            )
+            );
         end
 endgenerate
 
-slave_vldrdy i_slave(
+slave_vldrdy #(
     .DWIDTH (DWIDTH)
 )
+i_slave
 (
     .clk      (),  // synchronous active on rising edge
     .rst_n    (),  // asynchronous, active low
@@ -72,9 +73,10 @@ slave_vldrdy i_slave(
     .read_counter()
 );
 
-vld_rdy_checker i_checker1 #(
+vld_rdy_checker #(
     .DATA_WIDTH(DWIDTH) // Data width;
-)     
+)  
+i_checker1    
 (     
     .clk    () , // System clock;                                                  
     .rst_n  () , // Asynchronous reset, active low;                .
@@ -83,9 +85,10 @@ vld_rdy_checker i_checker1 #(
     .data   ()   // cfg nr of bits using DATA_WIDTH parameter, Pixel read chanel bus;  
 );
 
-vld_rdy_checker i_checker2 #(
+vld_rdy_checker  #(
     .DATA_WIDTH(DWIDTH) // Data width;
-)     
+)   
+i_checker2  
 (     
     .clk    () , // System clock;                                                  
     .rst_n  () , // Asynchronous reset, active low;                .
