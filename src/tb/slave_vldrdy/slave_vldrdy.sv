@@ -9,7 +9,8 @@ module slave_vldrdy #(
     // 16 bit output flow     
     input                 dst_val  ,  // valid, active high
     output                dst_rdy  ,  // ready, active high
-    input  [DWIDTH-1:0]   dst_data    // data, steady on valid
+    input  [DWIDTH-1:0]   dst_data ,   // data, steady on valid
+    input  [9:0]          read_counter
 );
 
 int write_counter = 0;
@@ -24,13 +25,16 @@ initial begin
 end
 
 always @(posedge clk)
-if (cfg_en && dst_val && dst_rdy)
-begin
-    write_counter++;
-    if(DWIDTH == 'd8)
-        $fwrite(fd,"%c",dst_data  );
-    else
-        $fwrite(fd,"%c%c",dst_data);
-end
+    if (cfg_en && dst_val && dst_rdy)
+    begin
+        write_counter++;
+        if(DWIDTH == 'd8)
+            $fwrite(fd,"%c",dst_data  );
+        else
+            $fwrite(fd,"%c%c",dst_data);
+    end
 
+always @(posedge clk)
+    if(read_counter == write_counter)
+        $stop;
 endmodule
